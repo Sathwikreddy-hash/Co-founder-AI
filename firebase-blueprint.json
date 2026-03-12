@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Startup": {
+      "title": "Startup",
+      "description": "Startup project details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "idea": { "type": "string" },
+        "problem": { "type": "string" },
+        "targetUsers": { "type": "string" },
+        "market": { "type": "string" },
+        "competitors": { "type": "string" },
+        "status": { "type": "string", "enum": ["idea", "validation", "market", "mvp", "launch"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "idea"]
+    },
+    "Analysis": {
+      "title": "Analysis",
+      "description": "AI generated startup analysis",
+      "type": "object",
+      "properties": {
+        "startupId": { "type": "string" },
+        "userId": { "type": "string" },
+        "report": { "type": "object" },
+        "validation": { "type": "object" },
+        "competitors": { "type": "array" },
+        "mvp": { "type": "object" },
+        "roadmap": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["startupId", "userId"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Message in the AI mentor chat",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startupId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "role", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/startups/{startupId}": {
+      "schema": "Startup",
+      "description": "Startup projects"
+    },
+    "/analyses/{analysisId}": {
+      "schema": "Analysis",
+      "description": "AI analyses"
+    },
+    "/chats/{chatId}": {
+      "schema": "ChatMessage",
+      "description": "Chat messages"
+    }
+  }
+}
