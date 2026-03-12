@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy, addDoc, doc, getDoc } from 'firebase/firestore';
-import { ChatMessage, Startup } from '../types';
+import { collection, query, where, onSnapshot, orderBy, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ChatMessage, Startup, AgentAction } from '../types';
 import { getMentorResponse } from '../services/gemini';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -11,7 +11,14 @@ import {
   Sparkles, 
   ArrowLeft,
   Rocket,
-  MessageSquare
+  MessageSquare,
+  Zap,
+  Check,
+  X,
+  Mail,
+  ListTodo,
+  Search as SearchIcon,
+  ShieldCheck
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -24,6 +31,8 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [startup, setStartup] = useState<Startup | null>(null);
+  const [isAgentMode, setIsAgentMode] = useState(false);
+  const [pendingActions, setPendingActions] = useState<AgentAction[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,14 +59,32 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
       setMessages(list);
     });
 
-    return unsubscribe;
+    const actionsQ = query(
+      collection(db, 'agent_actions'),
+      where('startupId', '==', startupId),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribeActions = onSnapshot(actionsQ, (snapshot) => {
+      const list: AgentAction[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() } as AgentAction);
+      });
+      setPendingActions(list);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeActions();
+    };
   }, [startupId]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, pendingActions]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,20 +105,66 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
       });
 
       // Get AI response
-      const aiResponse = await getMentorResponse(startup, [...messages, { role: 'user', content: userMessage }]);
+      const result = await getMentorResponse(
+        startup, 
+        [...messages, { role: 'user', content: userMessage } as ChatMessage],
+        isAgentMode
+      );
 
       // Add AI message to Firestore
       await addDoc(collection(db, 'chats'), {
         userId: auth.currentUser.uid,
         startupId,
         role: 'assistant',
-        content: aiResponse,
+        content: result.text,
         createdAt: new Date().toISOString()
       });
+
+      // Handle function calls
+      if (result.functionCalls) {
+        for (const fc of result.functionCalls) {
+          await addDoc(collection(db, 'agent_actions'), {
+            userId: auth.currentUser.uid,
+            startupId,
+            type: fc.name.replace('request_', ''),
+            status: 'pending',
+            details: fc.args,
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
     } catch (error) {
       console.error("Chat failed", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAction = async (actionId: string, status: 'approved' | 'denied') => {
+    try {
+      if (!auth.currentUser) return;
+      
+      const actionRef = doc(db, 'agent_actions', actionId);
+      const actionSnap = await getDoc(actionRef);
+      const actionData = actionSnap.data() as AgentAction;
+
+      // Update the action status
+      await updateDoc(actionRef, {
+        status: status === 'approved' ? 'completed' : 'denied',
+        result: status === 'approved' ? 'Action executed successfully.' : 'Action denied by user.',
+        updatedAt: new Date().toISOString()
+      });
+
+      // Add a system message to the chat
+      await addDoc(collection(db, 'chats'), {
+        userId: auth.currentUser.uid,
+        startupId,
+        role: 'assistant',
+        content: `*System: Agent action "${actionData.type.replace('_', ' ')}" was ${status}.*`,
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Action failed", error);
     }
   };
 
@@ -107,6 +180,18 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
             <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Advising: {startup?.name}</p>
           </div>
         </div>
+
+        <button 
+          onClick={() => setIsAgentMode(!isAgentMode)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+            isAgentMode 
+              ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20' 
+              : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+          }`}
+        >
+          <Zap className={`w-4 h-4 ${isAgentMode ? 'fill-current' : ''}`} />
+          {isAgentMode ? 'Agent Mode Active' : 'Enable Agent Mode'}
+        </button>
       </div>
 
       <div 
@@ -158,6 +243,74 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
           </motion.div>
         ))}
 
+        {/* Pending Agent Actions */}
+        <AnimatePresence>
+          {pendingActions.map((action) => (
+            <motion.div
+              key={action.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-emerald-500/10 border border-emerald-500/20 rounded-[32px] p-6 ml-14 max-w-lg"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-emerald-500 p-2 rounded-xl">
+                  <ShieldCheck className="w-5 h-5 text-slate-950" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-tight text-emerald-400">Permission Required</h4>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Agent wants to: {action.type.replace('_', ' ')}</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/50 rounded-2xl p-4 mb-6 border border-white/5">
+                {action.type === 'send_email' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <Mail className="w-3 h-3" /> To: {action.details.to}
+                    </div>
+                    <div className="text-sm font-bold text-slate-200">{action.details.subject}</div>
+                    <div className="text-xs text-slate-400 line-clamp-2 italic">"{action.details.body}"</div>
+                  </div>
+                )}
+                {action.type === 'create_task' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <ListTodo className="w-3 h-3" /> New Task
+                    </div>
+                    <div className="text-sm font-bold text-slate-200">{action.details.title}</div>
+                    <div className="text-xs text-slate-400">{action.details.description}</div>
+                  </div>
+                )}
+                {action.type === 'market_research' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <SearchIcon className="w-3 h-3" /> Deep Research
+                    </div>
+                    <div className="text-sm font-bold text-slate-200">Topic: {action.details.topic}</div>
+                    <div className="text-xs text-slate-400">Depth: {action.details.depth}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => handleAction(action.id, 'approved')}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                >
+                  <Check className="w-4 h-4" /> Approve
+                </button>
+                <button 
+                  onClick={() => handleAction(action.id, 'denied')}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                >
+                  <X className="w-4 h-4" /> Deny
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
         {loading && (
           <div className="flex gap-4">
             <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0">
@@ -181,8 +334,10 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask your AI mentor anything..."
-          className="w-full bg-slate-900 border-2 border-white/5 rounded-2xl py-4 pl-6 pr-16 text-lg focus:outline-none focus:border-emerald-500 transition-all"
+          placeholder={isAgentMode ? "Give your agent a task..." : "Ask your AI mentor anything..."}
+          className={`w-full bg-slate-900 border-2 rounded-2xl py-4 pl-6 pr-16 text-lg focus:outline-none transition-all ${
+            isAgentMode ? 'border-emerald-500/50 focus:border-emerald-500' : 'border-white/5 focus:border-emerald-500'
+          }`}
         />
         <button 
           type="submit"

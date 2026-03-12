@@ -22,12 +22,13 @@ import Dashboard from './components/Dashboard';
 import StartupWizard from './components/StartupWizard';
 import AnalysisView from './components/AnalysisView';
 import ChatMentor from './components/ChatMentor';
+import PartnerDashboard from './components/PartnerDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'landing' | 'dashboard' | 'wizard' | 'analysis' | 'chat'>('landing');
+  const [view, setView] = useState<'landing' | 'dashboard' | 'wizard' | 'analysis' | 'chat' | 'partner'>('landing');
   const [selectedStartupId, setSelectedStartupId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -174,7 +175,8 @@ export default function App() {
             {view === 'landing' && <LandingPage onStart={handleLogin} key="landing" />}
             {view === 'dashboard' && <Dashboard onSelect={(id) => { setSelectedStartupId(id); setView('analysis'); }} key="dashboard" />}
             {view === 'wizard' && <StartupWizard onComplete={(id) => { setSelectedStartupId(id); setView('analysis'); }} key="wizard" />}
-            {view === 'analysis' && selectedStartupId && <AnalysisView startupId={selectedStartupId} onOpenChat={() => setView('chat')} key="analysis" />}
+            {view === 'analysis' && selectedStartupId && <AnalysisView startupId={selectedStartupId} onOpenChat={() => setView('chat')} onOpenPartner={() => setView('partner')} key="analysis" />}
+            {view === 'partner' && selectedStartupId && <PartnerDashboard startupId={selectedStartupId} key="partner" />}
             {view === 'chat' && selectedStartupId && <ChatMentor startupId={selectedStartupId} key="chat" />}
           </AnimatePresence>
         </main>

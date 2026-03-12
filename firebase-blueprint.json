@@ -59,6 +59,67 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "role", "content"]
+    },
+    "AgentAction": {
+      "title": "AgentAction",
+      "description": "Action requested by the AI agent",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startupId": { "type": "string" },
+        "type": { "type": "string", "enum": ["send_email", "create_task", "market_research", "draft_content"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "denied", "completed", "failed"] },
+        "details": { "type": "object" },
+        "result": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startupId", "type", "status"]
+    },
+    "DailyBriefing": {
+      "title": "DailyBriefing",
+      "description": "Daily AI generated briefing",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startupId": { "type": "string" },
+        "date": { "type": "string" },
+        "marketUpdates": { "type": "array" },
+        "competitorActivity": { "type": "array" },
+        "opportunities": { "type": "array" },
+        "risks": { "type": "array" },
+        "recommendedActions": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startupId", "date"]
+    },
+    "MarketIntelligence": {
+      "title": "MarketIntelligence",
+      "description": "Continuous market signals",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startupId": { "type": "string" },
+        "signals": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startupId"]
+    },
+    "WeeklyReport": {
+      "title": "WeeklyReport",
+      "description": "Weekly progress summary",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startupId": { "type": "string" },
+        "weekRange": { "type": "string" },
+        "progress": { "type": "string" },
+        "keyInsights": { "type": "array" },
+        "risks": { "type": "array" },
+        "strategyAdjustments": { "type": "array" },
+        "nextWeekPriorities": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startupId", "weekRange"]
     }
   },
   "firestore": {
@@ -77,6 +138,22 @@
     "/chats/{chatId}": {
       "schema": "ChatMessage",
       "description": "Chat messages"
+    },
+    "/agent_actions/{actionId}": {
+      "schema": "AgentAction",
+      "description": "Agent actions"
+    },
+    "/briefings/{briefingId}": {
+      "schema": "DailyBriefing",
+      "description": "Daily briefings"
+    },
+    "/intelligence/{intelligenceId}": {
+      "schema": "MarketIntelligence",
+      "description": "Market intelligence"
+    },
+    "/weekly_reports/{reportId}": {
+      "schema": "WeeklyReport",
+      "description": "Weekly reports"
     }
   }
 }

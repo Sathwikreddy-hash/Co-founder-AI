@@ -33,9 +33,10 @@ import html2canvas from 'html2canvas';
 interface AnalysisViewProps {
   startupId: string;
   onOpenChat: () => void;
+  onOpenPartner: () => void;
 }
 
-export default function AnalysisView({ startupId, onOpenChat }: AnalysisViewProps) {
+export default function AnalysisView({ startupId, onOpenChat, onOpenPartner }: AnalysisViewProps) {
   const [startup, setStartup] = useState<Startup | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -154,6 +155,13 @@ export default function AnalysisView({ startupId, onOpenChat }: AnalysisViewProp
     { subject: 'Viability', A: analysis?.validation.viabilityScore, fullMark: 100 },
   ];
 
+  const scoreData = analysis?.startupScore ? [
+    { name: 'Market Demand', value: analysis.startupScore.marketDemand, color: '#10b981' },
+    { name: 'Competition', value: analysis.startupScore.competitionIntensity, color: '#3b82f6' },
+    { name: 'Urgency', value: analysis.startupScore.problemUrgency, color: '#a855f7' },
+    { name: 'Growth', value: analysis.startupScore.growthPotential, color: '#f59e0b' },
+  ] : [];
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12" id="analysis-report">
       {/* Header */}
@@ -175,14 +183,125 @@ export default function AnalysisView({ startupId, onOpenChat }: AnalysisViewProp
             Export PDF
           </button>
           <button 
+            onClick={onOpenPartner}
+            className="flex items-center gap-2 bg-slate-900 border border-white/10 hover:bg-slate-800 px-6 py-3 rounded-2xl font-bold transition-all"
+          >
+            <Zap className="w-4 h-4 text-emerald-500" />
+            Partner Dashboard
+          </button>
+          <button 
             onClick={onOpenChat}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-2xl font-black transition-all shadow-lg shadow-emerald-500/20"
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-2xl font-black transition-all shadow-lg shadow-emerald-500/20 group relative"
           >
             <MessageSquare className="w-4 h-4" />
             Talk to Co-founder
+            <div className="absolute -top-2 -right-2 bg-emerald-400 text-slate-950 text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
+              AGENT MODE
+            </div>
           </button>
         </div>
       </div>
+
+      {/* Startup Score Section */}
+      {analysis?.startupScore && (
+        <motion.section 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="grid grid-cols-1 lg:grid-cols-4 gap-8"
+        >
+          <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-[40px] p-8 flex flex-col items-center justify-center text-center">
+            <div className="relative w-40 h-40 flex items-center justify-center mb-4">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  fill="transparent"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  className="text-white/5"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  fill="transparent"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  strokeDasharray={440}
+                  strokeDashoffset={440 - (440 * analysis.startupScore.total) / 100}
+                  className="text-emerald-500 transition-all duration-1000"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-5xl font-black">{analysis.startupScore.total}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Startup Score</span>
+              </div>
+            </div>
+            <p className="text-sm text-slate-400 font-medium">Overall potential based on market signals</p>
+          </div>
+
+          <div className="lg:col-span-3 bg-slate-900/50 border border-white/5 rounded-[40px] p-8">
+            <h3 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-2">
+              <BarChart className="w-5 h-5 text-emerald-500" />
+              Score Breakdown
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              {scoreData.map((item, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-500">{item.name}</span>
+                    <span className="text-sm font-black" style={{ color: item.color }}>{item.value}%</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${item.value}%` }}
+                      transition={{ duration: 1, delay: i * 0.1 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
+      {/* Next 3 Actions Section */}
+      {analysis?.nextActions && (
+        <section className="space-y-6">
+          <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
+            <Rocket className="w-6 h-6 text-emerald-500" />
+            Your Next 3 Founder Actions
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {analysis.nextActions.map((action, i) => (
+              <motion.div 
+                key={i}
+                whileHover={{ y: -5 }}
+                className="bg-slate-900/50 border border-white/5 p-8 rounded-[32px] relative group"
+              >
+                <div className="absolute top-4 right-4">
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                    action.impact === 'high' ? 'bg-emerald-500/10 text-emerald-500' :
+                    action.impact === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                    'bg-slate-500/10 text-slate-500'
+                  }`}>
+                    {action.impact} impact
+                  </span>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:bg-emerald-500 transition-all">
+                  <span className="text-xl font-black group-hover:text-slate-950">{i + 1}</span>
+                </div>
+                <h4 className="text-xl font-black mb-3">{action.title}</h4>
+                <p className="text-slate-400 text-sm leading-relaxed">{action.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Co-founder Strategic Advice */}
       <motion.section 

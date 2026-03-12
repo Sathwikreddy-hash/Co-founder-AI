@@ -67,6 +67,58 @@ export interface Analysis {
     advice: string;
   };
   coFounderAdvice: string[];
+  startupScore: {
+    total: number;
+    marketDemand: number;
+    competitionIntensity: number;
+    problemUrgency: number;
+    growthPotential: number;
+  };
+  nextActions: {
+    title: string;
+    description: string;
+    impact: 'high' | 'medium' | 'low';
+  }[];
+  createdAt: string;
+}
+
+export interface DailyBriefing {
+  id: string;
+  startupId: string;
+  userId: string;
+  date: string;
+  marketUpdates: string[];
+  competitorActivity: string[];
+  opportunities: string[];
+  risks: string[];
+  recommendedActions: string[];
+  createdAt: string;
+}
+
+export interface MarketIntelligence {
+  id: string;
+  startupId: string;
+  userId: string;
+  signals: {
+    type: 'growth' | 'competitor' | 'funding' | 'tech' | 'social';
+    title: string;
+    description: string;
+    source?: string;
+    impact: 'positive' | 'negative' | 'neutral';
+  }[];
+  createdAt: string;
+}
+
+export interface WeeklyReport {
+  id: string;
+  startupId: string;
+  userId: string;
+  weekRange: string;
+  progress: string;
+  keyInsights: string[];
+  risksDiscovered: string[];
+  strategyAdjustments: string[];
+  nextWeekPriorities: string[];
   createdAt: string;
 }
 
@@ -76,5 +128,16 @@ export interface ChatMessage {
   startupId: string;
   role: 'user' | 'assistant';
   content: string;
+  createdAt: string;
+}
+
+export interface AgentAction {
+  id: string;
+  userId: string;
+  startupId: string;
+  type: 'send_email' | 'create_task' | 'market_research' | 'draft_content';
+  status: 'pending' | 'approved' | 'denied' | 'completed' | 'failed';
+  details: any;
+  result?: any;
   createdAt: string;
 }

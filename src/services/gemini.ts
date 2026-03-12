@@ -1,8 +1,50 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
+const sendEmailTool: FunctionDeclaration = {
+  name: "request_send_email",
+  parameters: {
+    type: Type.OBJECT,
+    description: "Request to send an email to a recipient. This requires user approval.",
+    properties: {
+      to: { type: Type.STRING, description: "Recipient email address" },
+      subject: { type: Type.STRING, description: "Email subject" },
+      body: { type: Type.STRING, description: "Email body content" }
+    },
+    required: ["to", "subject", "body"]
+  }
+};
+
+const createTaskTool: FunctionDeclaration = {
+  name: "request_create_task",
+  parameters: {
+    type: Type.OBJECT,
+    description: "Request to create a task in the startup roadmap. This requires user approval.",
+    properties: {
+      title: { type: Type.STRING, description: "Task title" },
+      description: { type: Type.STRING, description: "Task description" },
+      priority: { type: Type.STRING, enum: ["low", "medium", "high"], description: "Task priority" }
+    },
+    required: ["title", "description"]
+  }
+};
+
+const marketResearchTool: FunctionDeclaration = {
+  name: "request_market_research",
+  parameters: {
+    type: Type.OBJECT,
+    description: "Request deep market research on a specific topic. This requires user approval.",
+    properties: {
+      topic: { type: Type.STRING, description: "The specific topic or competitor to research" },
+      depth: { type: Type.STRING, enum: ["quick", "deep"], description: "Level of research depth" }
+    },
+    required: ["topic"]
+  }
+};
+
 export const analyzeStartup = async (startup: any) => {
+// ... (rest of the file)
   const model = "gemini-3.1-pro-preview";
   const prompt = `
     You are a world-class startup co-founder and venture capitalist. 
@@ -69,6 +111,18 @@ export const analyzeStartup = async (startup: any) => {
         "Strategic advice 1",
         "Strategic advice 2",
         "Strategic advice 3"
+      ],
+      "startupScore": {
+        "total": 0-100,
+        "marketDemand": 0-100,
+        "competitionIntensity": 0-100,
+        "problemUrgency": 0-100,
+        "growthPotential": 0-100
+      },
+      "nextActions": [
+        { "title": "Action title", "description": "Practical description", "impact": "high/medium/low" },
+        { "title": "Action title", "description": "Practical description", "impact": "high/medium/low" },
+        { "title": "Action title", "description": "Practical description", "impact": "high/medium/low" }
       ]
     }
   `;
@@ -85,13 +139,113 @@ export const analyzeStartup = async (startup: any) => {
   return JSON.parse(response.text || "{}");
 };
 
-export const getMentorResponse = async (startup: any, messages: any[]) => {
+export const generateDailyBriefing = async (startup: any) => {
+  const model = "gemini-3.1-pro-preview";
+  const prompt = `
+    You are the AI Co-founder of ${startup.name}. 
+    Startup Context: ${startup.idea}
+    
+    Generate a "Daily Founder Briefing" based on current market signals and news.
+    Use Google Search to find the latest news, competitor updates, and trends.
+    
+    Return JSON:
+    {
+      "marketUpdates": ["Update 1", "Update 2"],
+      "competitorActivity": ["Activity 1", "Activity 2"],
+      "opportunities": ["Opportunity 1", "Opportunity 2"],
+      "risks": ["Risk 1", "Risk 2"],
+      "recommendedActions": ["Action 1", "Action 2"]
+    }
+  `;
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      tools: [{ googleSearch: {} }]
+    }
+  });
+
+  return JSON.parse(response.text || "{}");
+};
+
+export const generateMarketIntelligence = async (startup: any) => {
+  const model = "gemini-3.1-pro-preview";
+  const prompt = `
+    You are the AI Co-founder of ${startup.name}. 
+    Startup Context: ${startup.idea}
+    
+    Continuously analyze market signals. Find:
+    1. Industry growth signals
+    2. Competitor launches
+    3. Funding announcements in the space
+    4. Tech trends
+    5. Social signals (Reddit/Twitter discussions)
+    
+    Return JSON:
+    {
+      "signals": [
+        {
+          "type": "growth|competitor|funding|tech|social",
+          "title": "Signal title",
+          "description": "Signal description",
+          "impact": "positive|negative|neutral"
+        }
+      ]
+    }
+  `;
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      tools: [{ googleSearch: {} }]
+    }
+  });
+
+  return JSON.parse(response.text || "{}");
+};
+
+export const generateWeeklyReport = async (startup: any, weekProgress: string) => {
+  const model = "gemini-3.1-pro-preview";
+  const prompt = `
+    You are the AI Co-founder of ${startup.name}. 
+    Startup Context: ${startup.idea}
+    Progress this week: ${weekProgress}
+    
+    Generate a Weekly Founder Report.
+    
+    Return JSON:
+    {
+      "weekRange": "Current week range",
+      "progress": "Summary of progress",
+      "keyInsights": ["Insight 1", "Insight 2"],
+      "risksDiscovered": ["Risk 1", "Risk 2"],
+      "strategyAdjustments": ["Adjustment 1", "Adjustment 2"],
+      "nextWeekPriorities": ["Priority 1", "Priority 2"]
+    }
+  `;
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json"
+    }
+  });
+
+  return JSON.parse(response.text || "{}");
+};
+
+export const getMentorResponse = async (startup: any, messages: any[], isAgentMode: boolean = false) => {
   const model = "gemini-3.1-pro-preview";
   const chat = ai.chats.create({
     model,
     config: {
       systemInstruction: `You are the AI Co-founder of ${startup.name}. 
-      You are not just an assistant; you are a partner. 
+      ${isAgentMode ? 'AGENT MODE IS ACTIVE. You can now request to perform actions on behalf of the founder using the provided tools. ALWAYS explain why you want to perform an action and wait for user approval.' : 'You are not just an assistant; you are a partner.'}
       Your tone is professional, strategic, and deeply supportive of solo founders.
       
       Key Responsibilities:
@@ -100,12 +254,18 @@ export const getMentorResponse = async (startup: any, messages: any[]) => {
       3. Help with tough decisions (hiring, pivoting, pricing).
       4. Always suggest the next high-leverage task.
       5. Use Google Search to verify any market claims.
+      ${isAgentMode ? '6. Proactively suggest using your tools (sending emails, creating tasks, deep research) when it helps the startup.' : ''}
       
-      If the founder is stuck, give them a 'Co-founder Challenge' to get them moving.`
+      If the founder is stuck, give them a 'Co-founder Challenge' to get them moving.`,
+      tools: isAgentMode ? [{ functionDeclarations: [sendEmailTool, createTaskTool, marketResearchTool] }] : []
     }
   });
 
   const lastMessage = messages[messages.length - 1].content;
   const response = await chat.sendMessage({ message: lastMessage });
-  return response.text;
+  
+  return {
+    text: response.text,
+    functionCalls: response.functionCalls
+  };
 };
