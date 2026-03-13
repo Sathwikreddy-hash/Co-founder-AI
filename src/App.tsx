@@ -31,38 +31,52 @@ export default function App() {
   const [view, setView] = useState<'landing' | 'dashboard' | 'wizard' | 'analysis' | 'chat' | 'partner'>('landing');
   const [selectedStartupId, setSelectedStartupId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        // Sync user to Firestore
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            createdAt: new Date().toISOString(),
-          });
+      try {
+        if (user) {
+          setUser(user);
+          // Sync user to Firestore
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              createdAt: new Date().toISOString(),
+            });
+          }
+          if (view === 'landing') setView('dashboard');
+        } else {
+          setUser(null);
+          setView('landing');
         }
-        if (view === 'landing') setView('dashboard');
-      } else {
-        setUser(null);
-        setView('landing');
+      } catch (error) {
+        console.error("Auth state change error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsubscribe;
-  }, []);
+  }, [view]);
 
   const handleLogin = async () => {
+    setLoginError(null);
     try {
       await signInWithGoogle();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setLoginError("This domain is not authorized in Firebase. Please add your Vercel URL to 'Authorized domains' in the Firebase Console.");
+      } else if (error.code === 'auth/popup-blocked') {
+        setLoginError("The login popup was blocked by your browser. Please allow popups for this site.");
+      } else {
+        setLoginError(error.message || "Login failed. Please try again.");
+      }
     }
   };
 
@@ -86,7 +100,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30">
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden">
         {/* Navigation */}
         <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -168,6 +182,28 @@ export default function App() {
             )}
           </AnimatePresence>
         </nav>
+
+        {/* Login Error Toast */}
+        <AnimatePresence>
+          {loginError && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4"
+            >
+              <div className="bg-red-500 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 shrink-0" />
+                  <p className="text-sm font-bold">{loginError}</p>
+                </div>
+                <button onClick={() => setLoginError(null)} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Content */}
         <main className="pt-24 pb-12">

@@ -163,40 +163,40 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner }: A
   ] : [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-12" id="analysis-report">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-12 overflow-x-hidden" id="analysis-report">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
+        <div className="w-full md:w-auto">
           <div className="flex items-center gap-2 text-emerald-500 text-xs font-black uppercase tracking-widest mb-2">
             <CheckCircle2 className="w-4 h-4" />
             Co-founder Analysis Complete
           </div>
-          <h1 className="text-5xl font-black tracking-tighter uppercase">{startup?.name}</h1>
-          <p className="text-slate-500 mt-2 max-w-2xl">{startup?.idea}</p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase break-words">{startup?.name}</h1>
+          <p className="text-slate-500 mt-2 max-w-2xl text-sm md:text-base">{startup?.idea}</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <button 
             onClick={exportToPDF}
-            className="flex items-center gap-2 bg-slate-900 border border-white/10 hover:bg-slate-800 px-6 py-3 rounded-2xl font-bold transition-all"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-900 border border-white/10 hover:bg-slate-800 px-4 md:px-6 py-3 rounded-2xl font-bold transition-all text-sm md:text-base"
           >
             <Download className="w-4 h-4" />
-            Export PDF
+            <span className="whitespace-nowrap">Export PDF</span>
           </button>
           <button 
             onClick={onOpenPartner}
-            className="flex items-center gap-2 bg-slate-900 border border-white/10 hover:bg-slate-800 px-6 py-3 rounded-2xl font-bold transition-all"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-900 border border-white/10 hover:bg-slate-800 px-4 md:px-6 py-3 rounded-2xl font-bold transition-all text-sm md:text-base"
           >
             <Zap className="w-4 h-4 text-emerald-500" />
-            Partner Dashboard
+            <span className="whitespace-nowrap">Partner Dashboard</span>
           </button>
           <button 
             onClick={onOpenChat}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-2xl font-black transition-all shadow-lg shadow-emerald-500/20 group relative"
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3 rounded-2xl font-black transition-all shadow-lg shadow-emerald-500/20 group relative text-sm md:text-base"
           >
             <MessageSquare className="w-4 h-4" />
-            Talk to Co-founder
-            <div className="absolute -top-2 -right-2 bg-emerald-400 text-slate-950 text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
-              AGENT MODE
+            <span className="whitespace-nowrap">Talk to Co-founder</span>
+            <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-emerald-400 text-slate-950 text-[7px] md:text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse shadow-lg">
+              AGENT
             </div>
           </button>
         </div>
@@ -207,46 +207,47 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner }: A
         <motion.section 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="grid grid-cols-1 lg:grid-cols-4 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8"
         >
-          <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-[40px] p-8 flex flex-col items-center justify-center text-center">
-            <div className="relative w-40 h-40 flex items-center justify-center mb-4">
+          <div className="lg:col-span-1 bg-slate-900/50 border border-white/5 rounded-[32px] md:rounded-[40px] p-6 md:p-8 flex flex-col items-center justify-center text-center">
+            <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center mb-4">
               <svg className="w-full h-full transform -rotate-90">
                 <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
+                  cx="50%"
+                  cy="50%"
+                  r="45%"
                   fill="transparent"
                   stroke="currentColor"
-                  strokeWidth="12"
+                  strokeWidth="8"
                   className="text-white/5"
                 />
                 <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
+                  cx="50%"
+                  cy="50%"
+                  r="45%"
                   fill="transparent"
                   stroke="currentColor"
-                  strokeWidth="12"
-                  strokeDasharray={440}
-                  strokeDashoffset={440 - (440 * analysis.startupScore.total) / 100}
+                  strokeWidth="8"
+                  strokeDasharray="283"
+                  strokeDashoffset={283 - (283 * analysis.startupScore.total) / 100}
                   className="text-emerald-500 transition-all duration-1000"
+                  strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-black">{analysis.startupScore.total}</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Startup Score</span>
+                <span className="text-3xl md:text-5xl font-black">{analysis.startupScore.total}</span>
+                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-500">Startup Score</span>
               </div>
             </div>
-            <p className="text-sm text-slate-400 font-medium">Overall potential based on market signals</p>
+            <p className="text-xs md:text-sm text-slate-400 font-medium">Overall potential based on market signals</p>
           </div>
 
-          <div className="lg:col-span-3 bg-slate-900/50 border border-white/5 rounded-[40px] p-8">
-            <h3 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-2">
+          <div className="lg:col-span-3 bg-slate-900/50 border border-white/5 rounded-[32px] md:rounded-[40px] p-6 md:p-8">
+            <h3 className="text-lg md:text-xl font-black uppercase tracking-tight mb-6 md:mb-8 flex items-center gap-2">
               <BarChart className="w-5 h-5 text-emerald-500" />
               Score Breakdown
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 md:gap-x-12 gap-y-6 md:gap-y-8">
               {scoreData.map((item, i) => (
                 <div key={i} className="space-y-2">
                   <div className="flex justify-between items-end">
@@ -307,17 +308,17 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner }: A
       <motion.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-emerald-500/10 border border-emerald-500/20 rounded-[40px] p-8 relative overflow-hidden"
+        className="bg-emerald-500/10 border border-emerald-500/20 rounded-[32px] md:rounded-[40px] p-6 md:p-8 relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <Sparkles className="w-32 h-32 text-emerald-500" />
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <Sparkles className="w-24 h-24 md:w-32 md:h-32 text-emerald-500" />
         </div>
         <div className="relative z-10">
-          <h3 className="text-2xl font-black uppercase tracking-tight mb-6 flex items-center gap-2 text-emerald-400">
+          <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight mb-6 flex items-center gap-2 text-emerald-400">
             <Zap className="w-6 h-6" />
-            Strategic Advice for Solo Founders
+            Strategic Advice
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {analysis?.coFounderAdvice?.map((advice, i) => (
               <div key={i} className="bg-slate-950/50 p-6 rounded-3xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
                 <div className="text-emerald-500 font-black mb-2">#0{i + 1}</div>

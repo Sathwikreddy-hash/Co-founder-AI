@@ -251,7 +251,7 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-emerald-500/10 border border-emerald-500/20 rounded-[32px] p-6 ml-14 max-w-lg"
+              className="bg-emerald-500/10 border border-emerald-500/20 rounded-[32px] p-6 md:ml-14 max-w-lg"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-emerald-500 p-2 rounded-xl">
