@@ -24,7 +24,8 @@ import {
   FileText,
   Layout,
   Target,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import jsPDF from 'jspdf';
@@ -34,9 +35,10 @@ interface AnalysisViewProps {
   startupId: string;
   onOpenChat: () => void;
   onOpenPartner: () => void;
+  onBack: () => void;
 }
 
-export default function AnalysisView({ startupId, onOpenChat, onOpenPartner }: AnalysisViewProps) {
+export default function AnalysisView({ startupId, onOpenChat, onOpenPartner, onBack }: AnalysisViewProps) {
   const [startup, setStartup] = useState<Startup | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -167,6 +169,13 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner }: A
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="w-full md:w-auto">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
           <div className="flex items-center gap-2 text-emerald-500 text-xs font-black uppercase tracking-widest mb-2">
             <CheckCircle2 className="w-4 h-4" />
             Co-founder Analysis Complete

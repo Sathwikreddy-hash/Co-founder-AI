@@ -16,9 +16,10 @@ import {
 
 interface StartupWizardProps {
   onComplete: (id: string) => void;
+  onCancel: () => void;
 }
 
-export default function StartupWizard({ onComplete }: StartupWizardProps) {
+export default function StartupWizard({ onComplete, onCancel }: StartupWizardProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,6 +40,7 @@ export default function StartupWizard({ onComplete }: StartupWizardProps) {
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
+    else onCancel();
   };
 
   const handleSubmit = async () => {
@@ -219,11 +221,10 @@ export default function StartupWizard({ onComplete }: StartupWizardProps) {
             <div className="flex items-center justify-between mt-12">
               <button
                 onClick={handleBack}
-                disabled={step === 1}
-                className={`flex items-center gap-2 font-bold transition-colors ${step === 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
+                className="flex items-center gap-2 font-bold transition-colors text-slate-400 hover:text-white"
               >
                 <ArrowLeft className="w-5 h-5" />
-                Back
+                {step === 1 ? 'Cancel' : 'Back'}
               </button>
 
               <button

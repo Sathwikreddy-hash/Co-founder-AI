@@ -21,14 +21,16 @@ import {
   Users,
   DollarSign,
   Cpu,
-  MessageSquare
+  MessageSquare,
+  ArrowLeft
 } from 'lucide-react';
 
 interface PartnerDashboardProps {
   startupId: string;
+  onBack: () => void;
 }
 
-export default function PartnerDashboard({ startupId }: PartnerDashboardProps) {
+export default function PartnerDashboard({ startupId, onBack }: PartnerDashboardProps) {
   const [startup, setStartup] = useState<Startup | null>(null);
   const [briefing, setBriefing] = useState<DailyBriefing | null>(null);
   const [intelligence, setIntelligence] = useState<MarketIntelligence | null>(null);
@@ -149,6 +151,13 @@ export default function PartnerDashboard({ startupId }: PartnerDashboardProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-xs font-black uppercase tracking-widest mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Analysis
+          </button>
           <h1 className="text-4xl font-black tracking-tighter uppercase flex items-center gap-3">
             <Zap className="w-8 h-8 text-emerald-500" />
             Co-founder Dashboard

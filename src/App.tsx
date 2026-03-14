@@ -14,7 +14,8 @@ import {
   Shield,
   TrendingUp,
   Users,
-  BarChart3
+  BarChart3,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import LandingPage from './components/LandingPage';
@@ -203,13 +204,29 @@ export default function App() {
 
         {/* Main Content */}
         <main className="pt-24 pb-12">
+          <div className="max-w-7xl mx-auto px-4 mb-6">
+            {view !== 'landing' && view !== 'dashboard' && (
+              <button 
+                onClick={() => {
+                  if (view === 'analysis') setView('dashboard');
+                  else if (view === 'chat' || view === 'partner') setView('analysis');
+                  else if (view === 'wizard') setView('dashboard');
+                  else setView('dashboard');
+                }}
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm uppercase tracking-widest"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to {view === 'analysis' || view === 'wizard' ? 'Dashboard' : 'Analysis'}
+              </button>
+            )}
+          </div>
           <AnimatePresence mode="wait">
             {view === 'landing' && <LandingPage onStart={handleLogin} key="landing" />}
-            {view === 'dashboard' && <Dashboard onSelect={(id) => { setSelectedStartupId(id); setView('analysis'); }} key="dashboard" />}
-            {view === 'wizard' && <StartupWizard onComplete={(id) => { setSelectedStartupId(id); setView('analysis'); }} key="wizard" />}
-            {view === 'analysis' && selectedStartupId && <AnalysisView startupId={selectedStartupId} onOpenChat={() => setView('chat')} onOpenPartner={() => setView('partner')} key="analysis" />}
-            {view === 'partner' && selectedStartupId && <PartnerDashboard startupId={selectedStartupId} key="partner" />}
-            {view === 'chat' && selectedStartupId && <ChatMentor startupId={selectedStartupId} key="chat" />}
+            {view === 'dashboard' && <Dashboard onSelect={(id) => { setSelectedStartupId(id); setView('analysis'); }} onCreateNew={() => setView('wizard')} key="dashboard" />}
+            {view === 'wizard' && <StartupWizard onComplete={(id) => { setSelectedStartupId(id); setView('analysis'); }} onCancel={() => setView('dashboard')} key="wizard" />}
+            {view === 'analysis' && selectedStartupId && <AnalysisView startupId={selectedStartupId} onOpenChat={() => setView('chat')} onOpenPartner={() => setView('partner')} onBack={() => setView('dashboard')} key="analysis" />}
+            {view === 'partner' && selectedStartupId && <PartnerDashboard startupId={selectedStartupId} onBack={() => setView('analysis')} key="partner" />}
+            {view === 'chat' && selectedStartupId && <ChatMentor startupId={selectedStartupId} onBack={() => setView('analysis')} key="chat" />}
           </AnimatePresence>
         </main>
 

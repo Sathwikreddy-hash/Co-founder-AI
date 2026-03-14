@@ -24,9 +24,10 @@ import ReactMarkdown from 'react-markdown';
 
 interface ChatMentorProps {
   startupId: string;
+  onBack: () => void;
 }
 
-export default function ChatMentor({ startupId }: ChatMentorProps) {
+export default function ChatMentor({ startupId, onBack }: ChatMentorProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -172,6 +173,12 @@ export default function ChatMentor({ startupId }: ChatMentorProps) {
     <div className="max-w-4xl mx-auto px-4 py-8 h-[calc(100vh-160px)] flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
+          <button 
+            onClick={onBack}
+            className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-500 hover:text-white"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div className="bg-emerald-500 p-2 rounded-xl">
             <Bot className="w-6 h-6 text-slate-950" />
           </div>

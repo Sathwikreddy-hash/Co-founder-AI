@@ -18,9 +18,10 @@ import {
 
 interface DashboardProps {
   onSelect: (id: string) => void;
+  onCreateNew: () => void;
 }
 
-export default function Dashboard({ onSelect }: DashboardProps) {
+export default function Dashboard({ onSelect, onCreateNew }: DashboardProps) {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -119,6 +120,7 @@ export default function Dashboard({ onSelect }: DashboardProps) {
           <h2 className="text-2xl font-bold mb-2">No Startups Yet</h2>
           <p className="text-slate-500 mb-8 max-w-sm mx-auto">Ready to build the next big thing? Start by adding your first startup idea.</p>
           <button 
+            onClick={onCreateNew}
             className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-8 py-3 rounded-2xl font-black transition-all"
           >
             CREATE NEW STARTUP
