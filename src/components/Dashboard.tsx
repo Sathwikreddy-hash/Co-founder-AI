@@ -51,6 +51,12 @@ export default function Dashboard({ onSelect, onCreateNew }: DashboardProps) {
     return ((stages.indexOf(status) + 1) / stages.length) * 100;
   };
 
+  const handleCreateNew = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onCreateNew();
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -120,8 +126,8 @@ export default function Dashboard({ onSelect, onCreateNew }: DashboardProps) {
           <h2 className="text-2xl font-bold mb-2">No Startups Yet</h2>
           <p className="text-slate-500 mb-8 max-w-sm mx-auto">Ready to build the next big thing? Start by adding your first startup idea.</p>
           <button 
-            onClick={onCreateNew}
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-8 py-3 rounded-2xl font-black transition-all"
+            onClick={handleCreateNew}
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-8 py-3 rounded-2xl font-black transition-all relative z-20"
           >
             CREATE NEW STARTUP
           </button>

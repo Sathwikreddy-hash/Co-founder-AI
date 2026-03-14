@@ -53,7 +53,8 @@ export default function App() {
               createdAt: new Date().toISOString(),
             }, { merge: true });
           }
-          if (view === 'landing') setView('dashboard');
+          // Only redirect to dashboard if we are currently on the landing page
+          setView(currentView => currentView === 'landing' ? 'dashboard' : currentView);
         } else {
           setUser(null);
           setView('landing');
@@ -65,7 +66,7 @@ export default function App() {
       }
     });
     return unsubscribe;
-  }, [view]);
+  }, []);
 
   const handleLogin = () => {
     setIsAuthModalOpen(true);
