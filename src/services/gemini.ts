@@ -44,8 +44,7 @@ const marketResearchTool: FunctionDeclaration = {
 };
 
 export const analyzeStartup = async (startup: any) => {
-// ... (rest of the file)
-  const model = "gemini-3.1-pro-preview";
+  const model = "gemini-3-flash-preview";
   const prompt = `
     You are a world-class startup co-founder and venture capitalist. 
     Analyze this startup idea for a solo founder:

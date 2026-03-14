@@ -43,38 +43,54 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner, onB
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchStartup = async () => {
-      const docRef = doc(db, 'startups', startupId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setStartup({ id: docSnap.id, ...docSnap.data() } as Startup);
+      try {
+        const docRef = doc(db, 'startups', startupId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && isMounted) {
+          setStartup({ id: docSnap.id, ...docSnap.data() } as Startup);
+        }
+      } catch (err) {
+        console.error("Error fetching startup:", err);
       }
     };
     fetchStartup();
 
     const analysisRef = doc(db, 'analyses', startupId);
     const unsubscribe = onSnapshot(analysisRef, (docSnap) => {
+      if (!isMounted) return;
       if (docSnap.exists()) {
         setAnalysis({ id: docSnap.id, ...docSnap.data() } as Analysis);
-        setLoading(false);
-      } else {
-        setLoading(false);
       }
-    }, (error) => {
-      console.error("Analysis snapshot error:", error);
       setLoading(false);
+    }, (err) => {
+      console.error("Analysis snapshot error:", err);
+      if (isMounted) setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [startupId]);
 
   const handleAnalyze = async () => {
-    if (!startup || !auth.currentUser) return;
+    console.log("Button clicked!");
+    if (!startup || !auth.currentUser) {
+      console.warn("Cannot analyze: startup or user missing", { startup, user: auth.currentUser });
+      return;
+    }
     setAnalyzing(true);
+    setError(null);
     try {
       const result = await analyzeStartup(startup);
+      if (!result || Object.keys(result).length === 0) {
+        throw new Error("AI returned an empty analysis. Please try again.");
+      }
       const analysisRef = doc(db, 'analyses', startupId);
       await setDoc(analysisRef, {
         ...result,
@@ -86,8 +102,9 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner, onB
       // Update startup status
       const startupRef = doc(db, 'startups', startupId);
       await setDoc(startupRef, { status: 'validation' }, { merge: true });
-    } catch (error) {
-      console.error("Analysis failed", error);
+    } catch (err: any) {
+      console.error("Analysis failed", err);
+      setError(err.message || "Analysis failed. Please check your connection and try again.");
     } finally {
       setAnalyzing(false);
     }
@@ -118,11 +135,24 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner, onB
         <p className="text-slate-400 text-xl max-w-xl mx-auto">
           Our AI engine is ready to analyze your startup idea across market demand, competition, and execution strategy.
         </p>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl max-w-md mx-auto flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-bold">{error}</p>
+          </div>
+        )}
+
         <button 
           onClick={handleAnalyze}
-          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-12 py-4 rounded-2xl font-black text-xl shadow-2xl shadow-emerald-500/20 transition-all transform hover:scale-105"
+          disabled={!startup}
+          className={`px-12 py-4 rounded-2xl font-black text-xl shadow-2xl transition-all transform hover:scale-105 ${
+            !startup 
+              ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+              : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'
+          }`}
         >
-          GENERATE FULL REPORT
+          {!startup ? 'LOADING STARTUP...' : 'GENERATE FULL REPORT'}
         </button>
       </div>
     );
