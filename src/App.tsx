@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth, signInWithGoogle, logout, db } from './firebase';
+import { auth, logout, db } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { 
@@ -24,6 +24,7 @@ import AnalysisView from './components/AnalysisView';
 import ChatMentor from './components/ChatMentor';
 import PartnerDashboard from './components/PartnerDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
+import AuthModal from './components/AuthModal';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,6 +33,7 @@ export default function App() {
   const [selectedStartupId, setSelectedStartupId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -44,11 +46,11 @@ export default function App() {
           if (!userSnap.exists()) {
             await setDoc(userRef, {
               uid: user.uid,
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
+              email: user.email || '',
+              displayName: user.displayName || 'Founder',
+              photoURL: user.photoURL || '',
               createdAt: new Date().toISOString(),
-            });
+            }, { merge: true });
           }
           if (view === 'landing') setView('dashboard');
         } else {
@@ -64,20 +66,8 @@ export default function App() {
     return unsubscribe;
   }, [view]);
 
-  const handleLogin = async () => {
-    setLoginError(null);
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      console.error("Login failed", error);
-      if (error.code === 'auth/unauthorized-domain') {
-        setLoginError("This domain is not authorized in Firebase. Please add your Vercel URL to 'Authorized domains' in the Firebase Console.");
-      } else if (error.code === 'auth/popup-blocked') {
-        setLoginError("The login popup was blocked by your browser. Please allow popups for this site.");
-      } else {
-        setLoginError(error.message || "Login failed. Please try again.");
-      }
-    }
+  const handleLogin = () => {
+    setIsAuthModalOpen(true);
   };
 
   const handleLogout = async () => {
@@ -204,6 +194,12 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)} 
+          onSuccess={() => setView('dashboard')}
+        />
 
         {/* Main Content */}
         <main className="pt-24 pb-12">
