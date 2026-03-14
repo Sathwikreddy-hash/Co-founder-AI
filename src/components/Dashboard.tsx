@@ -41,6 +41,9 @@ export default function Dashboard({ onSelect, onCreateNew }: DashboardProps) {
       });
       setStartups(list);
       setLoading(false);
+    }, (error) => {
+      console.error("Dashboard snapshot error:", error);
+      setLoading(false);
     });
 
     return unsubscribe;

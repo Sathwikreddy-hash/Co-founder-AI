@@ -62,6 +62,9 @@ export default function AnalysisView({ startupId, onOpenChat, onOpenPartner, onB
       } else {
         setLoading(false);
       }
+    }, (error) => {
+      console.error("Analysis snapshot error:", error);
+      setLoading(false);
     });
 
     return unsubscribe;

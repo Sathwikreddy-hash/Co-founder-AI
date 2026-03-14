@@ -86,6 +86,9 @@ export default function PartnerDashboard({ startupId, onBack }: PartnerDashboard
         setWeeklyReport({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as WeeklyReport);
       }
       setLoading(false);
+    }, (error) => {
+      console.error("Weekly report snapshot error:", error);
+      setLoading(false);
     });
 
     return () => {
